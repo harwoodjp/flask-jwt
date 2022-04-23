@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>flask-jwt</title>
+</head>
+<body>
+
+  <div id="login">
+    <input id="email" placeholder="email">
+    <input id="password" placeholder="password">
+    <button onclick="login()">Login</button>
+    <span id="message" style="color:red"></span>
+  </div>
+
+  <div id="logout">
+    <button onclick="logout()">Logout</button>    
+    <span>Welcome, </span>
+    <span id="user"></span>
+  </div>
+
+  <div id="books" style="margin:1em">
+    <span>Your books:</span>
+    <ul></ul>
+  </div>
+
+
+  <script type="text/javascript">
+    const loginBtn = document.querySelector("#login")
+    const logoutBtn = document.querySelector("#logout")
+    const userLabel = document.querySelector("#user")
+    const books = document.querySelector("#books")
+    const booksList = document.querySelector("#books ul")
+
+    const localStorage = window.localStorage
+    const token = localStorage.token
+    const user = localStorage.first_name
+
+    const showBooks = () => {
+      books.style.display = "block"      
+      fetch('/books', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ "token": token }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data)
+          for (i in data) {
+            console.log(data[i])
+            booksList.innerHTML += `
+              <li>${data[i]["title"]}</li>
+            `
+
+          }
+        })
+        .catch((error) => console.error(error))
+    }
+
+    const login = () => {
+      const email = document.querySelector("#email").value
+      const password = document.querySelector("#password").value
+      const message = document.querySelector("#message")
+      message.innerHTML = ""
+
+      fetch('/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email, password }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data)
+          if (data["token"]) {
+            window.localStorage.setItem("token", data["token"])
+            window.localStorage.setItem("id", data["id"])
+            window.localStorage.setItem("first_name", data["first_name"])
+            window.localStorage.setItem("last_name", data["last_name"])
+            location.reload()
+          } else
+            message.innerHTML = data["message"] 
+
+        })
+        .catch((error) => console.error(error))
+    }
+
+    const logout = () => {
+      localStorage.clear()
+      location.reload()
+    }
+
+    if (token) {
+      loginBtn.style.display = "none"
+      userLabel.innerHTML = user
+      books.style.display = "block"      
+      showBooks()
+    } else {
+      logoutBtn.style.display = "none"
+      books.style.display = "none"
+    }
+
+
+  </script>
+</body>
+</html>
